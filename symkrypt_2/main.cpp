@@ -1,51 +1,53 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <map>
+#include <Windows.h>
 
-std::map<char, int> getFrequency(const std::string& text) {
-    std::map<char, int> frequency;
-    for (char c : text) {
-        frequency[c]++;
-    }
-    return frequency;
+#include "vigenere.hpp"
+
+// Частоти символів знайдені у лабораторній 1
+
+void part1()
+{
+	using namespace VigenereLab;
+	std::ifstream inText("text.txt");
+	std::ifstream inKeys("keys.txt");
+
+	std::ofstream outCiphered("ciphered.txt");
+	std::ofstream outUnciphered("unciphered.txt");
+
+	if (!inText.is_open() || !inKeys.is_open())
+	{
+		std::cout << "Error! File is not opened! Check filename" << std::endl;
+		exit(0);
+		return;
+	}
+
+	std::string text = ParseText(inText);
+	std::vector<std::string> keys = ParseKeys(inKeys);
+
+	auto ciphTexts = CipherTexts(text, keys, outCiphered);
+
+	for (const auto& e : ciphTexts)
+	{
+		std::cout << CalcConfIndex(e) << ", ";
+	}
+
+	std::cout << std::endl;
+	std::cout << std::endl;
+	DecipherTexts(ciphTexts, keys, outUnciphered);
 }
 
-std::string Cipher(const std::string& text, const std::string& key) {
-    std::string result;
-    for (size_t i = 0; i < text.size(); i++) {
-        char c = (text[i] + key[i % key.size()]) % 32;
-        result += c;
-    }
-    return result;
-}
+int main()
+{
+	// We will use WIN-1251 CP
+	setlocale(LC_ALL, "ru-Ru");
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 
-std::string Decipher(const std::string& cipherText, const std::string& key) {
-    std::string result;
-    for (size_t i = 0; i < cipherText.size(); i++) {
-        char c = (cipherText[i] - key[i % key.size()] + 32) % 32;
-        result += c;
-    }
-    return result;
-}
+	part1();
 
-int main() {
-    std::string text = "блять, придумать чет нада ";
-    std::vector<std::string> keys = { "1", "2", "3", "4", "5" };
 
-    // почтак шифрування
-    std::vector<std::string> cipherTexts;
-    for (const std::string& key : keys) {
-        cipherTexts.push_back(vigenereCipher(text, key));
-    }
-
-    std::map<char, int> textFrequency = getFrequency(text);
-    for (const std::string& cipherText : cipherTexts) {
-        std::map<char, int> cipherTextFrequency = getFrequency(cipherText);
-        // дописати обчислення індексів
-    }
-
-    std::string decipheredText = vigenereDecipher(cipherTexts[0], keys[0]);
-    // рахувати якось довжину ключа
-
-    return 0;
+	return 0;
 }
