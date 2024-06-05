@@ -1,4 +1,7 @@
 #include "vigenere.hpp"
+#include <iostream>
+#include <fstream>
+#include <algorithm>
 
 bool VigenereLab::isLetter(char c)
 {
@@ -137,3 +140,149 @@ double VigenereLab::CalcConfIndex(const std::string& text)
 	I /= (static_cast<double>(text.size()) * (text.size() - 1));
 	return I;
 }
+
+double VigenereLab::GetConfIndexOfLang()
+{
+	double I = 0;
+
+	for (auto e : FREQ_TABLE)
+	{
+		I += e.second * e.second;
+	}
+
+	return I;
+
+}
+
+// This bullshit does not work! Or maybe work, but i am stupid
+// Працює, але не дуже зручно. Залишу це тут як згадку про невігластво.
+int VigenereLab::TryQuizLength1(std::string& text, int maxLength, double I)
+{
+	double I0 = static_cast<double>(1) / 32;
+	double min = 0;
+	std::ofstream out("QuizingTest.txt");
+	if (!out.is_open()) return 0;
+
+	out << "I0 = " << I0 << std::endl;
+
+	for (int r = 2; r < maxLength; r++)
+	{
+		std::vector<double> coefIndexes;
+		for (int i = 0; i < r; i++)
+		{
+			auto subtxt = GetIthBlock(text, r, i);
+			coefIndexes.push_back(CalcConfIndex(subtxt));
+		}
+
+		out << "r = " << r << std::endl;
+		out << "Coefs: ";
+
+		double Ir = 0;
+
+		for (auto e : coefIndexes)
+		{
+			Ir += e;
+			//out << e << ", ";
+		}
+
+		Ir /= coefIndexes.size();
+
+		out << abs(Ir - I0 ) << std::endl;
+
+		out << std::endl;
+		out << std::endl;
+
+	}
+
+	return 0;
+}
+
+// Good student, good. I will give you bowl of rice! +200 marks on campus
+int VigenereLab::TryQuizLength2(std::string& text, int maxLength, double epsilon)
+{
+	int maxIndex = 0;
+	double maxD = 0;
+	for (int r = 6; r < maxLength; r++)
+	{
+		int D = 0;
+		for (int i = 0; i < int64_t(text.size()) - r; i++)
+		{
+			D += text[i] == text[i + r];
+		}
+		// std::cout << "R = " << r << ": " << D << std::endl;
+		if (D > maxD)
+		{
+			maxD = D;
+			maxIndex = r;
+		}
+
+	}
+
+	std::cout << std::endl;
+
+	return maxIndex;
+
+}
+
+
+std::string VigenereLab::GetIthBlock(const std::string& text, int blockSize, int i)
+{
+	std::string res;
+
+	for (int j = i; j < text.size(); j += blockSize)
+	{
+		res.push_back(text[j]);
+	}
+
+	return res;
+}
+
+std::string VigenereLab::CeasarVigenreCracker(const std::string& text, int blockSize)
+{
+	std::map<char, double> langFreqsPr(FREQ_TABLE);
+	std::string key;
+	auto langGreatest  = GetMaxPairFromMap(FREQ_TABLE);
+
+	for (int i = 0; i < blockSize; i++)
+	{
+		std::map<char, int> blockFreqs = getFrequency(GetIthBlock(text, blockSize, i));
+
+		auto blockGreatest = GetMaxPairFromMap(blockFreqs);
+
+
+		key.push_back(alphabetSubstract(blockGreatest.first, langGreatest.first));
+
+	}
+
+	return key;
+}
+
+std::string VigenereLab::CrackVigenere(std::string& text, int blockSize)
+{
+	std::string key;
+	for (int i = 0; i < blockSize; i++)
+	{
+		std::map<char, double> m;
+		auto block = GetIthBlock(text, blockSize, i);
+		auto blockFreqs = getFrequency(block);
+
+		for (const auto& g : FREQ_TABLE)
+		{
+			double Mg = 0;
+			for (const auto& t : FREQ_TABLE)
+			{
+				char tg = alphabetAdd(t.first, g.first);
+				if (blockFreqs.find(tg) == blockFreqs.end()) continue;
+				Mg += t.second * blockFreqs[tg];
+			}
+			m[g.first] = Mg;
+		}
+
+		auto maxElement = GetMaxPairFromMap(m);
+		key.push_back(maxElement.first);
+	}
+
+	return key;
+}
+
+

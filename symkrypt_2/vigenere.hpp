@@ -6,7 +6,6 @@
 #include <string>
 #include <fstream>
 
-
 namespace VigenereLab
 {
 	const char ERROR_CHAR = '\0';
@@ -69,6 +68,28 @@ namespace VigenereLab
 	void DecipherTexts(const std::vector<std::string>& cipheredTexts, const std::vector<std::string>& keys, std::ofstream& out);
 
 	double CalcConfIndex(const std::string& text);
+
+	double GetConfIndexOfLang();
+
+	int TryQuizLength1(std::string& text, int maxLength, double epsilon);
+	int TryQuizLength2(std::string& text, int maxLength, double epsilon);
+
+	template<typename K, typename V>
+	std::pair<K, V> GetMaxPairFromMap(const std::map<K, V>& map)
+	{
+		auto maxFreqIter = std::max_element(map.begin(), map.end(), [](const std::pair<K, V>& p1, const std::pair<K, V>& p2) {
+			return p1.second < p2.second;
+			});
+		return *maxFreqIter;
+	}
+
+	std::string GetIthBlock(const std::string& text, int blockSize, int i);
+
+	std::string CeasarVigenreCracker(const std::string& text, int blockSize);
+
+	std::string CrackVigenere(std::string& text, int blockSize);
+
+
 }
 
 #endif
